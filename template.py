@@ -4,6 +4,7 @@ import pygame
 import time
 import sys
 import random
+import pygame.gfxdraw
 
 class Score:
     score = 0
@@ -44,6 +45,7 @@ footerH = 2 * (screenSize[1] - screenSize[0]) / 5
 
 size = 7
 cellSize = screenSize[0] / size
+numSize = cellSize - 10
 gameTable = []
 for x in range(size):
     gameTable.append([0] * size)
@@ -53,23 +55,28 @@ currentNumber = random.randint(1, size)
 moveCount = 10
 score = Score()
 
-colorWhite = (255, 255, 255)
-colorRed = (255, 0, 0)
-colorGreen = (0, 255, 0)
-colorBlue = (0, 0, 255)
-colorBlack = (0, 0, 0)
-palette = [(255, 51, 51), (255, 153, 51), (255, 255, 51), (0, 255, 128), (51, 153, 255), (51, 51, 255), (255, 51, 153)]
+colorWhite = pygame.Color(255, 255, 255)
+colorBlack = pygame.Color(0, 0, 0)
+colorBomb = pygame.Color(255, 0, 0)
+colorHeadFoot = pygame.Color(32, 32, 32)
+colorGame = pygame.Color(48, 48, 48)
+colorGrid = pygame.Color(64, 64, 64)
+colorLabel = pygame.Color(255, 69, 0)
+colorNumLabel = pygame.Color(255, 165, 0)
+palette = [(255, 51, 51), (255, 153, 51), (255, 255, 51), (51, 255, 51), (51, 153, 255), (51, 51, 255), (255, 51, 153)]
+palette_dark = [(102, 0, 0), (102, 51, 0), (102, 102, 0), (0, 102, 0), (0, 51, 102), (0, 0, 102), (102, 0, 51)]
+myFont_num = pygame.font.Font('5429331.ttf', 25)
+myFont_txt = pygame.font.Font('7442572.ttf', 20)
 
-myFont = pygame.font.SysFont("Monospace", 30)
-labelMove = myFont.render("Moves", 1, colorWhite)
-labelScore = myFont.render("Score", 1, colorWhite)
-labelRecord = myFont.render("Record", 1, colorWhite)
-labelNext = myFont.render("Next", 1, colorWhite)
-labelRestart = myFont.render("Restart", 1, colorWhite)
-labelTutor = myFont.render("?", 1, colorWhite)
+labelMove = myFont_txt.render("Moves", 1, colorLabel)
+labelScore = myFont_txt.render("Score", 1, colorLabel)
+labelRecord = myFont_txt.render("Record", 1, colorLabel)
+labelNext = myFont_txt.render("Next:", 1, colorLabel)
+labelRestart = myFont_txt.render("Restart", 1, colorLabel)
+labelTutor = myFont_txt.render("?", 1, colorLabel)
 numbers = [None for i in range(size)]
 for i in range(size):
-    numbers[i] = myFont.render(str(i + 1), 10, colorBlack)
+    numbers[i] = myFont_num.render(str(i + 1), 10, colorBlack)
 
 endGame = False
 pause = False
@@ -83,7 +90,7 @@ def AddNumber(x):
         if random.random() < 0.05:
             currentNumber = 2 * size + random.randint(1, size)
         else:
-            if random.random() < 0.2:
+            if random.random() < 0.02:
                 currentNumber = 100
             else:
                 currentNumber = random.randint(1, size)
@@ -214,55 +221,53 @@ def Restart():
     moveCount = 10
     endGame = False
 
-
 def Draw():
-    screen.fill(colorBlack)
+    screen.fill(colorHeadFoot, (0, 0, screenW, headerH))
+    screen.fill(colorGame, (0, headerH, screenW, screenW))
+    screen.fill(colorHeadFoot, (0, headerH + screenW, screenW, footerH))
     for i in range(size):
         for j in range(size):
-            pygame.draw.rect(screen, colorWhite, (i * cellSize, j * cellSize + headerH, cellSize, cellSize), 1)
-            pygame.draw.rect(screen, colorBlue, (i * cellSize + 1, j * cellSize + headerH + 1, cellSize, cellSize), 1)
+            pygame.draw.rect(screen, colorGrid, (i * cellSize, j * cellSize + headerH, cellSize + 1, cellSize + 1), 1)
             if gameTable[i][j] != 0:
                 if gameTable[i][j] <= size:
-                    pygame.draw.rect(screen, palette[gameTable[i][j] - 1],
-                                     (i * cellSize + 5, j * cellSize + headerH + 5, cellSize - 9, cellSize - 9), 0)
+                    DrawBlock(i * cellSize, j * cellSize + headerH, palette[gameTable[i][j] - 1])
                     DrawElement(numbers[gameTable[i][j] - 1], pygame.Rect(i * cellSize, j * cellSize + headerH, cellSize, cellSize))
-
                 else:
                     if gameTable[i][j] == 100:
-                        pygame.draw.ellipse(screen, colorRed, (i * cellSize + 5, j * cellSize + headerH + 5, cellSize - 9, cellSize - 9), 0)
+                        pygame.gfxdraw.aacircle(screen, int(i * cellSize + 5 + numSize / 2), int(j * cellSize + headerH + 5 + numSize / 2), int(numSize / 2), colorBomb)
+                        pygame.gfxdraw.filled_circle(screen, int(i * cellSize + 5 + numSize / 2), int(j * cellSize + headerH + 5 + numSize / 2), int(numSize / 2), colorBomb)
                     else:
                         if gameTable[i][j] <= 2 * size:
-                            pygame.draw.rect(screen, colorWhite, (
-                                i * cellSize + 5, j * cellSize + headerH + 5, cellSize - 9, cellSize - 9), 0)
+                            pygame.draw.rect(screen, colorBlack, (
+                                i * cellSize + 5, j * cellSize + headerH + 5, numSize, numSize), 0)
                         else:
-                            pygame.draw.rect(screen, colorWhite, (
-                                i * cellSize + 5, j * cellSize + headerH + 5, cellSize - 9, cellSize - 9), 2)
-                            pygame.draw.rect(screen, colorWhite, (
-                                i * cellSize + 10, j * cellSize + headerH + 10, cellSize - 18, cellSize - 18), 0)
+                            pygame.draw.rect(screen, colorBlack, (
+                                i * cellSize + 5, j * cellSize + headerH + 5, numSize, numSize), 1)
+                            pygame.draw.rect(screen, colorBlack, (
+                                i * cellSize + 10, j * cellSize + headerH + 10, cellSize - 20, cellSize - 20), 0)
 
-    DrawElement(labelMove, pygame.Rect(0, 0, screenW / 3, headerH / 3))
-    textMove = myFont.render(str(moveCount), 1, colorWhite)
-    DrawElement(textMove, pygame.Rect(0, headerH / 3, screenW / 3, headerH / 3))
+    DrawElement_(labelMove, pygame.Rect(0, 0, screenW / 3, headerH / 3))
+    textMove = myFont_txt.render(str(moveCount), 1, colorNumLabel)
+    DrawElement__(textMove, pygame.Rect(0, headerH / 3, screenW / 3, headerH / 3))
 
-    DrawElement(labelScore, pygame.Rect(screenW / 3, 0, screenW / 3, headerH / 3))
-    textScore = myFont.render(str(score.score), 1, colorWhite)
-    DrawElement(textScore, pygame.Rect(screenW / 3, headerH / 3, screenW / 3, headerH / 3))
+    DrawElement_(labelScore, pygame.Rect(screenW / 3, 0, screenW / 3, headerH / 3))
+    textScore = myFont_txt.render(str(score.score), 1, colorNumLabel)
+    DrawElement__(textScore, pygame.Rect(screenW / 3, headerH / 3, screenW / 3, headerH / 3))
 
-    DrawElement(labelRecord, pygame.Rect(screenW * 2 / 3, 0, screenW / 3, headerH / 3))
-    textRecord = myFont.render(str(score.bestScore), 1, colorWhite)
-    DrawElement(textRecord, pygame.Rect(screenW * 2 / 3, headerH / 3, screenW / 3, headerH / 3))
+    DrawElement_(labelRecord, pygame.Rect(screenW * 2 / 3, 0, screenW / 3, headerH / 3))
+    textRecord = myFont_txt.render(str(score.bestScore), 1, colorNumLabel)
+    DrawElement__(textRecord, pygame.Rect(screenW * 2 / 3, headerH / 3, screenW / 3, headerH / 3))
 
     DrawElement(labelNext, pygame.Rect(0, 2 * headerH / 3, screenW / 3, headerH / 3))
     if currentNumber == 100:
-        pygame.draw.rect(screen, colorWhite, (screenW / 3 + 5, 2 * headerH / 3 + 5, cellSize - 9, cellSize - 9), 2)
-        pygame.draw.ellipse(screen, colorRed,(screenW / 3 + 10, 2 * headerH / 3 + 10, cellSize - 18, cellSize - 18), 0)
+        pygame.gfxdraw.aacircle(screen, int(screenW / 3 + 5 + numSize / 2), int(2 * headerH / 3 + 5 + numSize / 2), int(numSize / 2), colorBomb)
+        pygame.gfxdraw.filled_circle(screen, int(screenW / 3 + 5 + numSize / 2), int(2 * headerH / 3 + 5 + numSize / 2), int(numSize / 2), colorBomb)
     else:
         if currentNumber > 2 * size:
-            pygame.draw.rect(screen, colorWhite, (screenW / 3 + 5, 2 * headerH / 3 + 5, cellSize - 9, cellSize - 9), 2)
-            pygame.draw.rect(screen, colorWhite, (screenW / 3 + 10, 2 * headerH / 3 + 10, cellSize - 18, cellSize - 18), 0)
+            pygame.draw.rect(screen, colorBlack, (screenW / 3 + 5, 2 * headerH / 3 + 5, numSize, numSize), 2)
+            pygame.draw.rect(screen, colorBlack, (screenW / 3 + 10, 2 * headerH / 3 + 10, cellSize - 18, cellSize - 18), 0)
         else:
-            pygame.draw.rect(screen, palette[currentNumber - 1],
-                             (screenW / 3 + 5, 2 * headerH / 3 + 5, cellSize - 9, cellSize - 9), 0)
+            DrawBlock(screenW / 3, 2 * headerH / 3, palette[currentNumber - 1])
             DrawElement(numbers[currentNumber - 1], pygame.Rect(screenW / 3, 2 * headerH / 3, cellSize, cellSize))
 
     DrawElement(labelTutor, pygame.Rect(0, screenSize[1] - footerH, screenW / 3, footerH))
@@ -276,49 +281,72 @@ def Draw():
 
     pygame.display.flip()
 
+def DrawBlock(x, y, color):
+    pygame.gfxdraw.aacircle(screen, int(x + 5 + numSize / 4), int(y + 5 + numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.filled_circle(screen, int(x + 5 + numSize / 4), int(y + 5 + numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.aacircle(screen, int(x + 5 + numSize / 4), int(y + 5 + 3 * numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.filled_circle(screen, int(x + 5 + numSize / 4), int(y + 5 + 3 * numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.aacircle(screen, int(x + 5 + 3 * numSize / 4), int(y + 5 + numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.filled_circle(screen, int(x + 5 + 3 * numSize / 4), int(y + 5 + numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.aacircle(screen, int(x + 5 + 3 * numSize / 4), int(y + 5 + 3 * numSize / 4), int(numSize / 4), color)
+    pygame.gfxdraw.filled_circle(screen, int(x + 5 + 3 * numSize / 4), int(y + 5 + 3 * numSize / 4), int(numSize / 4), color)
+    pointlist = ((x + 5 + numSize / 4, y + 5), (x + 5 + 3 * numSize / 4, y + 5),
+                 (x + 5 + numSize, y + 5 + numSize / 4), (x + 5 + numSize, y + 5 + 3 * numSize / 4),
+                 (x + 5 + 3 * numSize / 4, y + 5 + numSize), (x + 5 + numSize / 4, y + 5 + numSize),
+                 (x + 5, y + 5 + 3 * numSize / 4), (x + 5, y + 5 + numSize / 4))
+    pygame.gfxdraw.aapolygon(screen, pointlist, color)
+    pygame.gfxdraw.filled_polygon(screen, pointlist, color)
+
 def DrawElement(text, rect):
     loc = text.get_rect()
     loc.center = rect.center
     screen.blit(text, loc)
 
+def DrawElement_(text, rect):
+    loc = text.get_rect()
+    loc.centerx = rect.centerx
+    loc.bottom = rect.bottom
+    screen.blit(text, loc)
+
+def DrawElement__(text, rect):
+    loc = text.get_rect()
+    loc.centerx = rect.centerx
+    loc.top = rect.top
+    screen.blit(text, loc)
 
 def DrawEndGame():
     overlay = pygame.Surface((screenW, screenW))
-    overlay.set_alpha(200)
+    overlay.set_alpha(220)
     overlay.fill((255, 255, 255))
     screen.blit(overlay, (0, headerH))
 
-    text = myFont.render("Game Over!", 1, colorBlack, colorWhite)
+    text = myFont_txt.render("Game Over!", 1, colorBlack, colorWhite)
     loc = text.get_rect()
     loc.center = screen.get_rect().center
     screen.blit(text, loc)
-
 
 def DrawAbout():
     overlay = pygame.Surface((screenW, screenW))
-    overlay.set_alpha(200)
+    overlay.set_alpha(220)
     overlay.fill((255, 255, 255))
     screen.blit(overlay, (0, headerH))
 
-    text = myFont.render("Play on!", 1, colorBlack, colorWhite)
+    text = myFont_txt.render("Play on!", 1, colorBlack, colorWhite)
     loc = text.get_rect()
     loc.center = screen.get_rect().center
     screen.blit(text, loc)
-
 
 Update = None
 pos = None
 
-
 def UpdateAdd():
     global Update, pos
-    if pos is not None:
+    if pos is not None and not pause:
         if 10 * cellSize > pos[1] > 3 * cellSize:
             if not endGame:
                 AddNumber(pos[0])
                 Update = UpdateShift
     pos = None
-
 
 def UpdateDel():
     global Update
@@ -329,7 +357,6 @@ def UpdateDel():
     else:
         Update = UpdateRow
 
-
 def UpdateRow():
     global Update, endGame
     endGame = EndBeforeNewRow() or (moveCount == 0 and EndAfterNewRow())
@@ -339,12 +366,10 @@ def UpdateRow():
     else:
         Update = UpdateAdd
 
-
 def UpdateShift():
     global Update
     if not ShiftDown():
         Update = UpdateDel
-
 
 Update = UpdateAdd
 while True:
